@@ -135,6 +135,10 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   }
 })
 
+app.use('*', (req, res)=>{
+  return res.status(404).send('[object Object]')
+})
+
 const PORT = process.env.PORT || 3000
 const listener = app.listen(PORT, () => {
   console.log('Your app is listening on port ' + PORT)
