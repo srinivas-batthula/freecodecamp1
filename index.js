@@ -74,9 +74,9 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     console.log('empty')
     return res.send(body)
   }
-  if(!body.date){
-    body.date = new Date()
-  }
+  // if(!body.date){
+  //   body.date = new Date()
+  // }
 
   try {
     const user = await UserModel.findById(user_id)
@@ -87,7 +87,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     const r = {
       _id: user_id,
       username: user.username,
-      date: body.date.toDateString(),
+      date: new Date().toDateString(),
       duration: body.duration,
       description: body.description,
     }
