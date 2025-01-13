@@ -22,7 +22,10 @@ mongoose.connection.on('disconnected', () => { console.log('MongoDB is disconnec
 
 
 app.use('/' ,cors({
-  origin:['https://www.freecodecamp.org']
+  origin:['https://www.freecodecamp.org'],
+  methods:['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials:true,
+  allowedHeaders:['*']
 }))
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: false }))
