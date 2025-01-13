@@ -21,11 +21,11 @@ mongoose.connection.on('error', (err) => { console.log(`Error in MongoDB connect
 mongoose.connection.on('disconnected', () => { console.log('MongoDB is disconnected & attempting to reconnect...'); ConnectDb(); })
 
 
-app.use(cors({
-  origin:['*'],
-  methods:['*'],
-  allowedHeaders:['*']
-}))
+// app.use(cors({
+//   origin:['*'],
+//   methods:['*'],
+//   allowedHeaders:['*']
+// }))
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: false }))
 
