@@ -1,90 +1,141 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-
-const app = express();
-
-// Basic Configuration
-const port = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(bodyParser.urlencoded({ extended: false }));
-
-app.use('/public', express.static(`${process.cwd()}/public`));
-
-app.get('/', function(req, res) {
-  res.sendFile(process.cwd() + '/views/index.html');
-});
-
-// Your first API endpoint
-app.get('/api/hello', function(req, res) {
-  res.json({ greeting: 'hello API' });
-});
+const express = require('express')
+const app = express()
+const cors = require('cors')
+const bodyParser = require('body-parser')
+const mongoose = require('mongoose')
+const UserModel = require('./userModel')
+require('dotenv').config('./config.env')
 
 
-// ----------------->>>>>>>>>>>>>>>>>>
-const dns = require('dns');
-
-// In-memory storage for URLs
-const urlDatabase = {};
-let shortUrlCounter = 1;
-
-// Function to validate hostname using DNS lookup
-function validateUrl(submittedUrl, callback) {
-  let hostname;
-
-  try {
-    hostname = new URL(submittedUrl).hostname;
-  } catch (error) {
-    return callback(false);
-  }
-
-  dns.lookup(hostname, (err) => {
-    if (err) {
-      callback(false);
-    } else {
-      callback(true);
-    }
-  });
+const DB_URI = process.env.DB_URI || 'mongodb+srv://srini:NqQcATU2TGQ3WR94@cluster0.wgb4u.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+// console.log(DB_URI)
+const ConnectDb = () => {
+  mongoose.connect(DB_URI, { maxPoolSize: 12 })
+    .then((res) => { console.log(`Connected to MongoDB successfully  -->  ${res}`) })
+    .catch((err) => { console.log(`Error while connecting to MongoDB  -->  ${err}`) });
 }
+ConnectDb();
 
-// Handle POST request to create short URL
-app.post('/api/shorturl', (req, res) => {
-  const originalUrl = req.body.url;
+mongoose.connection.on('connected', () => { console.log('Connected to DB...') })
+mongoose.connection.on('error', (err) => { console.log(`Error in MongoDB connection  -->  ${err}`) })
+mongoose.connection.on('disconnected', () => { console.log('MongoDB is disconnected & attempting to reconnect...'); ConnectDb(); })
 
-  validateUrl(originalUrl, (isValid) => {
-    if (!isValid) {
-      return res.json({ error: 'invalid url' });
-    }
 
-    // Store URL and assign short URL
-    const shortUrl = shortUrlCounter++;
-    urlDatabase[shortUrl] = originalUrl;
+app.use(cors())
+app.use(express.static('public'))
+app.use(bodyParser.urlencoded({ extended: false }))
 
-    res.json({
-      original_url: originalUrl,
-      short_url: shortUrl
-    });
-  });
-});
-
-// Redirect to original URL when short URL is visited
-app.get('/api/shorturl/:short_url', (req, res) => {
-  const shortUrl = req.params.short_url;
-  const originalUrl = urlDatabase[shortUrl];
-
-  if (originalUrl) {
-    res.redirect(originalUrl);
-  } else {
-    res.send('Not found');
-  }
-});
-
-app.use('*', (req, res)=>{
-  return res.send('Not found');
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/views/index.html')
 })
 
-app.listen(port, function() {
-  console.log(`Listening on port ${port}`);
-});
+
+app.post('/api/users', async (req, res) => {
+  console.log(req.url)
+  const body = req.body
+  body.count = 0
+
+  try {
+    const r = await UserModel.create(body)
+    console.log('success')
+    return res.status(201).json({ 'username': r.username, '_id': r._id })
+  }
+  catch (error) {
+    console.log(error)
+    return res.status(500).json({ 'ValidationError: ': error })
+  }
+})
+
+app.get('/api/users', async (req, res) => {
+  console.log(req.url)
+  try {
+    const r = await UserModel.find({}).lean()
+    const re = r.map((r1)=>{
+      return {
+        '_id':r1._id,
+        'username':r1.username
+      }
+    })
+    console.log('success')
+    return res.status(200).send(re)
+  }
+  catch (error) {
+    console.log(error)
+    return res.status(500).send(error)
+  }
+})
+
+app.post('/api/users/:_id/exercises', async (req, res) => {
+  const user_id = req.params._id
+  const body = req.body
+  console.log(req.url)
+
+  if (!body.description || !body.duration) {
+    console.log('empty')
+    return res.send(body)
+  }
+  if(!body.date){
+    body.date = new Date()
+  }
+
+  try {
+    const user = await UserModel.findById(user_id)
+    user.log.push(body)
+    user.count++
+    await user.save()
+
+    const r = {
+      _id: user_id,
+      username: user.username,
+      date: body.date.toDateString(),
+      duration: body.duration,
+      description: body.description,
+    }
+    console.log('success')
+    return res.status(201).send(r)
+  }
+  catch (error) {
+    console.log(error)
+    return res.status(500).send(error)
+  }
+})
+
+app.get('/api/users/:_id/logs', async (req, res) => {
+  const user_id = req.params._id
+  const { from, to, limit } = req.query
+  console.log(req.url)
+
+  try {
+    const user = await UserModel.findById(user_id).lean()
+
+    let filteredLogs = user.log.filter(logs => {
+      return (!from || logs.date >= new Date(from)) &&
+        (!to || logs.date <= new Date(to));
+    })
+
+    if (limit) {
+      filteredLogs = filteredLogs.slice(0, parseInt(limit));
+    }
+
+    console.log('success')
+    res.json({
+      _id: user._id,
+      username: user.username,
+      count: filteredLogs.length,
+      logs: filteredLogs.map(log => ({
+        description: log.description,
+        duration: log.duration,
+        date: log.date.toDateString(),
+      }))
+    })
+  }
+  catch (error) {
+    console.log(error)
+    return res.status(500).send(error)
+  }
+})
+
+const PORT = process.env.PORT || 3000
+const listener = app.listen(PORT, () => {
+  console.log('Your app is listening on port ' + PORT)
+})
