@@ -31,36 +31,37 @@ app.get('/', (req, res) => {
 
 
 app.post('/api/users', async (req, res) => {
-  console.log(req.url)
+  // console.log(req.url)
   const body = req.body
   body.count = 0
 
   try {
     const r = await UserModel.create(body)
-    console.log('success')
+    // console.log('success')
     return res.status(201).json({ 'username': r.username, '_id': r._id })
   }
   catch (error) {
-    console.log(error)
+    // console.log(error)
     return res.status(500).json({ 'ValidationError: ': error })
   }
 })
 
 app.get('/api/users', async (req, res) => {
-  console.log(req.url)
+  // console.log(req.url)
   try {
     const r = await UserModel.find({}).lean()
     const re = r.map((r1)=>{
       return {
         '_id':r1._id,
-        'username':r1.username
+        'username':r1.username,
+        '__v':r1.__v
       }
     })
-    console.log('success')
+    // console.log('success')
     return res.status(200).send(re)
   }
   catch (error) {
-    console.log(error)
+    // console.log(error)
     return res.status(500).send(error)
   }
 })
@@ -68,12 +69,13 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users/:_id/exercises', async (req, res) => {
   const user_id = req.params._id
   const body = req.body
-  console.log(req.url)
+  // console.log(req.url)
 
   if (!body.description || !body.duration) {
     console.log('empty')
     return res.send(body)
   }
+  body.duration = Number(body.duration)
   // if(!body.date){
   //   body.date = new Date()
   // }
@@ -88,14 +90,14 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       _id: user_id,
       username: user.username,
       date: new Date().toDateString(),
-      duration: body.duration,
+      duration: Number(body.duration),
       description: body.description,
     }
-    console.log('success')
+    // console.log('success')
     return res.status(201).send(r)
   }
   catch (error) {
-    console.log(error)
+    // console.log(error)
     return res.status(500).send(error)
   }
 })
@@ -103,7 +105,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 app.get('/api/users/:_id/logs', async (req, res) => {
   const user_id = req.params._id
   const { from, to, limit } = req.query
-  console.log(req.url)
+  // console.log(req.url)
 
   try {
     const user = await UserModel.findById(user_id).lean()
@@ -117,20 +119,22 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       filteredLogs = filteredLogs.slice(0, parseInt(limit));
     }
 
-    console.log('success')
-    res.json({
+    filteredLogs = filteredLogs.map(log => ({
+      description: log.description,
+      duration: Number(log.duration),
+      date: log.date.toDateString(),
+    }))
+
+    // console.log('success')
+    res.status(200).send({
       _id: user._id,
       username: user.username,
-      count: filteredLogs.length,
-      logs: filteredLogs.map(log => ({
-        description: log.description,
-        duration: log.duration,
-        date: log.date.toDateString(),
-      }))
+      count: Number(filteredLogs.length),
+      log: filteredLogs
     })
   }
   catch (error) {
-    console.log(error)
+    // console.log(error)
     return res.status(500).send(error)
   }
 })
