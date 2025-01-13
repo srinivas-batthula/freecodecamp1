@@ -114,17 +114,18 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   
   // Parse the query string
   const params = {};
-  queryString.split('][&').forEach(pair => {
-    const [key, value] = pair.replace(/[\[\]]/g, '').split('=');
-    if (key) params[key] = value;
-  })
-  params.limit = Number(params.limit)
-
-  // Extract parsed parameters
-  let { from, to, limit } = params
-  if(from===to){
-    to=null
+  if(queryString){
+    queryString.split('][&').forEach(pair => {
+      const [key, value] = pair.replace(/[\[\]]/g, '').split('=');
+      if (key) params[key] = value;
+    })
+    params.limit = Number(params.limit)
   }
+    // Extract parsed parameters
+    let { from, to, limit } = params
+    if(from===to){
+      to=null
+    }
 
   try {
     const user = await UserModel.findById(user_id)
