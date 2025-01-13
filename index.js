@@ -109,19 +109,33 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 
 app.get('/api/users/:_id/logs', async (req, res) => {
   const user_id = req.params._id
-  const { from, to, limit } = req.query
-  // console.log(req.url)
+  // Extract the query part of the URL
+  const queryString = req.originalUrl.split('?')[1]
+  
+  // Parse the query string
+  const params = {};
+  queryString.split('][&').forEach(pair => {
+    const [key, value] = pair.replace(/[\[\]]/g, '').split('=');
+    if (key) params[key] = value;
+  })
+  params.limit = Number(params.limit)
+
+  // Extract parsed parameters
+  let { from, to, limit } = params
+  if(from===to){
+    to=null
+  }
 
   try {
     const user = await UserModel.findById(user_id)
 
     let filteredLogs = user.log.filter(logs => {
-      return (!from || new Date(logs.date) >= new Date(from)) &&
-        (!to || new Date(logs.date) <= new Date(to));
+      // console.log(new Date(logs.date))
+      return (!from || new Date(logs.date) >= new Date(from)) && (!to || new Date(logs.date) <= new Date(to));
     })
 
     if (limit) {
-      filteredLogs = filteredLogs.slice(0, parseInt(limit));
+      filteredLogs = filteredLogs.slice(0, Number(limit));
     }
 
     filteredLogs = filteredLogs.map(log => ({
