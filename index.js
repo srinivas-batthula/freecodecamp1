@@ -23,8 +23,8 @@ mongoose.connection.on('disconnected', () => { console.log('MongoDB is disconnec
 
 app.use('/' ,cors({
   origin:['https://www.freecodecamp.org'],
-  methods:['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  credentials:true,
+  methods:['*'],
+  // credentials:true,
   allowedHeaders:['*']
 }))
 app.use(express.static('public'))
@@ -87,6 +87,9 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 
   try {
     const user = await UserModel.findById(user_id)
+    if(!user){
+      return res.status(404).send(user)
+    }
     user.log.push(body)
     user.count++
     await user.save()
@@ -129,6 +132,9 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 
   try {
     const user = await UserModel.findById(user_id)
+    if(!user){
+      return res.status(404).send(user)
+    }
 
     let filteredLogs = user.log.filter(logs => {
       // console.log(new Date(logs.date))
