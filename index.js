@@ -46,7 +46,7 @@ app.post('/api/users', async (req, res) => {
     return res.status(201).json({ 'username': r.username, '_id': r._id })
   }
   catch (error) {
-    // console.log(error)
+    console.log(error)
     return res.status(500).json({ 'ValidationError: ': error })
   }
 })
@@ -66,7 +66,7 @@ app.get('/api/users', async (req, res) => {
     return res.status(200).send(re)
   }
   catch (error) {
-    // console.log(error)
+    console.log(error)
     return res.status(500).send(error)
   }
 })
@@ -102,7 +102,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     return res.status(201).send(r)
   }
   catch (error) {
-    // console.log(error)
+    console.log(error)
     return res.status(500).send(error)
   }
 })
@@ -116,8 +116,8 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     const user = await UserModel.findById(user_id)
 
     let filteredLogs = user.log.filter(logs => {
-      return (!from || logs.date >= new Date(from)) &&
-        (!to || logs.date <= new Date(to));
+      return (!from || new Date(logs.date) >= new Date(from)) &&
+        (!to || new Date(logs.date) <= new Date(to));
     })
 
     if (limit) {
@@ -139,7 +139,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     })
   }
   catch(error) {
-    // console.log(error)
+    console.log(error)
     return res.status(500).send(error)
   }
 })
