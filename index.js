@@ -108,7 +108,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   // console.log(req.url)
 
   try {
-    const user = await UserModel.findById(user_id).lean()
+    const user = await UserModel.findById(user_id)
 
     let filteredLogs = user.log.filter(logs => {
       return (!from || logs.date >= new Date(from)) &&
@@ -122,18 +122,18 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     filteredLogs = filteredLogs.map(log => ({
       description: log.description,
       duration: Number(log.duration),
-      date: log.date.toDateString(),
+      date: new Date(log.date).toDateString(),
     }))
 
     // console.log('success')
-    res.status(200).send({
+    return res.status(200).send({
       _id: user._id,
       username: user.username,
       count: Number(filteredLogs.length),
       log: filteredLogs
     })
   }
-  catch (error) {
+  catch(error) {
     // console.log(error)
     return res.status(500).send(error)
   }
