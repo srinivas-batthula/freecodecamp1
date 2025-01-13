@@ -113,19 +113,20 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 app.get('/api/users/:_id/logs', async (req, res) => {
   const user_id = req.params._id
   // Extract the query part of the URL
-  const queryString = req.originalUrl.split('?')[1]
+  // const queryString = req.originalUrl.split('?')[1]
+  const {from, to, limit} = req.query
   
   // Parse the query string
-  const params = {};
-  if(queryString){
-    queryString.split('][&').forEach(pair => {
-      const [key, value] = pair.replace(/[\[\]]/g, '').split('=');
-      if (key) params[key] = value;
-    })
-    params.limit = Number(params.limit)
-  }
-    // Extract parsed parameters
-    let { from, to, limit } = params
+  // const params = {};
+  // if(queryString){
+  //   queryString.split('][&').forEach(pair => {
+  //     const [key, value] = pair.replace(/[\[\]]/g, '').split('=');
+  //     if (key) params[key] = value;
+  //   })
+  //   params.limit = Number(params.limit)
+  // }
+  //   // Extract parsed parameters
+  //   let { from, to, limit } = params
     if(from===to){
       to=null
     }
@@ -165,8 +166,13 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   }
 })
 
+app.use((err, req, res, next)=>{
+  return res.status(404).send(err)
+})
+
 app.use('*', (req, res)=>{
-  return res.status(404).send('[object Object]')
+  const r=Object()
+  return res.status(404).send(r)
 })
 
 const PORT = process.env.PORT || 3000
