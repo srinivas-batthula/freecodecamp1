@@ -35,6 +35,45 @@ app.get('/', (req, res) => {
 })
 
 
+const errHtml1 = `<!DOCTYPE html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8">
+                    <title>Error</title>
+                  </head>
+                    <body>
+                    <pre>[object Object]</pre>
+                  </body>
+                </html>`
+const errHtml2 = `<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Error</title>
+    </head>
+    <body>
+        <pre>
+            CastError: Cast to ObjectId failed for value &quot;67845ec4374612001327576l &quot;(type string) at path &quot;_id &quot;for model &quot;Users &quot;<br>
+            &nbsp;&nbsp;at model.Query.exec (/app/node_modules/mongoose/lib/query.js:4498:21)<br>
+            &nbsp;&nbsp;at Query.findOne (/app/node_modules/mongoose/lib/query.js:2329:8)<br>
+            &nbsp;&nbsp;at Function.findOne (/app/node_modules/mongoose/lib/model.js:2275:13)<br>
+            &nbsp;&nbsp;at Function.findById (/app/node_modules/mongoose/lib/model.js:2215:15)<br>
+            &nbsp;&nbsp;at /app/routes/api.js:37:9<br>
+            &nbsp;&nbsp;at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)<br>
+            &nbsp;&nbsp;at next (/app/node_modules/express/lib/router/route.js:149:13)<br>
+            &nbsp;&nbsp;at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)<br>
+            &nbsp;&nbsp;at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)<br>
+            &nbsp;&nbsp;at /app/node_modules/express/lib/router/index.js:284:15<br>
+            &nbsp;&nbsp;at param (/app/node_modules/express/lib/router/index.js:365:14)<br>
+            &nbsp;&nbsp;at param (/app/node_modules/express/lib/router/index.js:376:14)<br>
+            &nbsp;&nbsp;at Function.process_params (/app/node_modules/express/lib/router/index.js:421:3)<br>
+            &nbsp;&nbsp;at next (/app/node_modules/express/lib/router/index.js:280:10)<br>
+            &nbsp;&nbsp;at Function.handle (/app/node_modules/express/lib/router/index.js:175:3)<br>&nbsp;&nbsp;at router (/app/node_modules/express/lib/router/index.js:47:12)
+        </pre>
+    </body>
+</html>
+`
+
 app.post('/api/users', async (req, res) => {
   // console.log(req.url)
   const body = req.body
@@ -43,11 +82,11 @@ app.post('/api/users', async (req, res) => {
   try {
     const r = await UserModel.create(body)
     // console.log('success')
-    return res.status(200).json({ 'username': r.username, '_id': r._id })
+    return res.status(200).send({ 'username': r.username, '_id': r._id })
   }
   catch (error) {
     console.log(error)
-    return res.status(500).json({ 'ValidationError: ': error })
+    return res.status(500).send(errHtml1)
   }
 })
 
@@ -63,11 +102,11 @@ app.get('/api/users', async (req, res) => {
       }
     })
     // console.log('success')
-    return res.status(200).json(re)
+    return res.status(200).send(re)
   }
   catch (error) {
     console.log(error)
-    return res.status(500).json(error)
+    return res.status(500).send(errHtml1)
   }
 })
 
@@ -77,8 +116,8 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
   // console.log(req.url)
 
   if (!body.description || !body.duration) {
-    console.log('empty')
-    return res.json(body)
+    // console.log('empty')
+    return res.status(404).send(errHtml1)
   }
   body.duration = Number(body.duration)
   // if(!body.date){
@@ -88,7 +127,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
   try {
     const user = await UserModel.findById(user_id)
     if(!user){
-      return res.status(404).json(user)
+      return res.status(500).send(errHtml2)
     }
     user.log.push(body)
     user.count++
@@ -102,11 +141,11 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       description: body.description,
     }
     // console.log('success')
-    return res.status(200).json(r)
+    return res.status(200).send(r)
   }
   catch (error) {
     console.log(error)
-    return res.status(500).json(error)
+    return res.status(500).send(errHtml1)
   }
 })
 
@@ -137,7 +176,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     // console.log(user)
 
     if(!user){
-      return res.status(404).json(user)
+      return res.status(500).send(errHtml2)
     }
 
     let filteredLogs = user.log.filter(logs => {
@@ -158,7 +197,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     }))
 
     // console.log('success')
-    return res.status(200).json({
+    return res.status(200).send({
       _id: user._id,
       username: user.username,
       count: Number(filteredLogs.length),
@@ -167,17 +206,16 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   }
   catch(error) {
     console.log(error)
-    return res.status(500).json(error)
+    return res.status(500).send(errHtml1)
   }
 })
 
 app.use((err, req, res, next)=>{
-  return res.status(404).json(err)
+  return res.status(404).send(errHtml1)
 })
 
 app.use('*', (req, res)=>{
-  const r = Object('Error')
-  return res.status(404).json(r)
+  return res.status(404).send(errHtml1)
 })
 
 const PORT = process.env.PORT || 3000
