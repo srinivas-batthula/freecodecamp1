@@ -63,11 +63,11 @@ app.get('/api/users', async (req, res) => {
       }
     })
     // console.log('success')
-    return res.status(200).send(re)
+    return res.status(200).json(re)
   }
   catch (error) {
     console.log(error)
-    return res.status(500).send(error)
+    return res.status(500).json(error)
   }
 })
 
@@ -78,7 +78,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 
   if (!body.description || !body.duration) {
     console.log('empty')
-    return res.send(body)
+    return res.json(body)
   }
   body.duration = Number(body.duration)
   // if(!body.date){
@@ -88,7 +88,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
   try {
     const user = await UserModel.findById(user_id)
     if(!user){
-      return res.status(404).send(user)
+      return res.status(404).json(user)
     }
     user.log.push(body)
     user.count++
@@ -102,11 +102,11 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       description: body.description,
     }
     // console.log('success')
-    return res.status(200).send(r)
+    return res.status(200).json(r)
   }
   catch (error) {
     console.log(error)
-    return res.status(500).send(error)
+    return res.status(500).json(error)
   }
 })
 
@@ -137,7 +137,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     // console.log(user)
 
     if(!user){
-      return res.status(404).send(user)
+      return res.status(404).json(user)
     }
 
     let filteredLogs = user.log.filter(logs => {
@@ -158,7 +158,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     }))
 
     // console.log('success')
-    return res.status(200).send({
+    return res.status(200).json({
       _id: user._id,
       username: user.username,
       count: Number(filteredLogs.length),
@@ -167,16 +167,17 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   }
   catch(error) {
     console.log(error)
-    return res.status(500).send(error)
+    return res.status(500).json(error)
   }
 })
 
 app.use((err, req, res, next)=>{
-  return res.status(404).send(err)
+  return res.status(404).json(err)
 })
 
 app.use('*', (req, res)=>{
-  return res.status(404).send('Error')
+  const r = Object('Error')
+  return res.status(404).json(r)
 })
 
 const PORT = process.env.PORT || 3000
