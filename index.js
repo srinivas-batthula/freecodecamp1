@@ -130,9 +130,12 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     if(from===to){
       to=null
     }
+    console.log(req.url+'\t'+from+'\t'+to+'\t'+limit)
 
   try {
     const user = await UserModel.findById(user_id)
+    console.log(user)
+
     if(!user){
       return res.status(404).send(user)
     }
@@ -141,10 +144,12 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       // console.log(new Date(logs.date))
       return (!from || new Date(logs.date) >= new Date(from)) && (!to || new Date(logs.date) <= new Date(to));
     })
+    console.log('filtered')
 
     if (limit) {
       filteredLogs = filteredLogs.slice(0, Number(limit));
     }
+    console.log('limited')
 
     filteredLogs = filteredLogs.map(log => ({
       description: log.description,
@@ -152,7 +157,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       date: new Date(log.date).toDateString(),
     }))
 
-    // console.log('success')
+    console.log('success')
     return res.status(200).send({
       _id: user._id,
       username: user.username,
@@ -167,12 +172,11 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 })
 
 app.use((err, req, res, next)=>{
-  return res.status(404).send(err)
+  return res.status(500).send(err)
 })
 
 app.use('*', (req, res)=>{
-  const r=Object()
-  return res.status(404).send(r)
+  return res.status(404).send('Error')
 })
 
 const PORT = process.env.PORT || 3000
