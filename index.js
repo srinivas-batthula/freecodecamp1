@@ -114,7 +114,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   const user_id = req.params._id
   // Extract the query part of the URL
   // const queryString = req.originalUrl.split('?')[1]
-  const {from, to, limit} = req.query
+  let {from, to, limit} = req.query
   
   // Parse the query string
   // const params = {};
