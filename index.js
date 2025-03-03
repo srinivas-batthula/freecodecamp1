@@ -120,9 +120,12 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     return res.status(404).send(errHtml1)
   }
   body.duration = Number(body.duration)
-  // if(!body.date){
-  //   body.date = new Date()
-  // }
+  if(body.date){
+    body.date = new Date(body.date).toDateString()
+  }   //67c547b8daa33a875fbea8e3
+  else{
+    body.date = new Date().toDateString()
+  }
 
   try {
     const user = await UserModel.findById(user_id)
@@ -136,7 +139,8 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     const r = {
       _id: user_id,
       username: user.username,
-      date: new Date().toDateString(),
+      // date: new Date().toDateString(),
+      date: body.date,
       duration: Number(body.duration),
       description: body.description,
     }
